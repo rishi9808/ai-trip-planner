@@ -4,6 +4,8 @@ import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import InfoSection from  "../components/InfoSection"
 import Hotels from  "../components/Hotels"
+import PlacesToVisit from  "../components/PlacesToVisit"
+import Footer from  "../components/Footer"
 
 const ViewTrip = ({ params: { tripId } }) => {
 
@@ -34,6 +36,10 @@ const ViewTrip = ({ params: { tripId } }) => {
       <Hotels trip={tripData} />
 
       {/* Daily plan */}
+      <PlacesToVisit trip={tripData} />
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
