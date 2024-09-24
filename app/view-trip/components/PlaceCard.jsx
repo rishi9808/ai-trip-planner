@@ -26,11 +26,10 @@ const PlaceCard = ({ place }) => {
           </div>
           <div className="flex flex-col justify-center">
             <CardDescription className="my-2">
-            🚘 {place.timeToTravel}
+              🚘 {place.timeToTravel}
             </CardDescription>
             <CardDescription className="mb-2 text-sm">
-             
-            💰{place.ticketPricing}
+              💰{place.ticketPricing}
             </CardDescription>
 
             <Button

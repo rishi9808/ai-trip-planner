@@ -10,7 +10,7 @@ import {
 } from "../../constants/options";
 import { Button } from "../../components/ui/button";
 import { toast } from "sonner";
-import { chatSession } from  "../../service/AiModel"
+import { chatSession } from "../../service/AiModel";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +31,6 @@ const createTrip = () => {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-
 
   const login = useGoogleLogin({
     onSuccess: (res) => getUserProfile(res),

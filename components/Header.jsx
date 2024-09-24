@@ -1,6 +1,6 @@
-import { Button } from "../components/ui/button"
-import Image from 'next/image'
-import React from 'react'
+import { Button } from "../components/ui/button";
+import Image from "next/image";
+import React from "react";
 
 const Header = () => {
   return (
@@ -8,7 +8,7 @@ const Header = () => {
       <Image src="/logo.svg" alt="logo" width={150} height={150} />
       <Button>Sign In</Button>
     </div>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;

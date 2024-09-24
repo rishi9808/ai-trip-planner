@@ -26,7 +26,7 @@ const Hotels = ({ trip }) => {
               <CardHeader className="h-[120px]">
                 <CardTitle>{hotel.hotelName}</CardTitle>
                 <CardDescription>{hotel.hotelAddress}</CardDescription>
-              </CardHeader >
+              </CardHeader>
               <CardContent className="">
                 <div>
                   <img
