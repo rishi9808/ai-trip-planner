@@ -7,8 +7,31 @@ import {
   CardHeader,
   CardTitle,
 } from "../../../components/ui/card";
+import { useEffect, useState } from "react";
+import { getPlaceDetails } from "../../../service/GlobalApi";
+import { PHOTO_REF_URL } from "../../../service/GlobalApi";
+import Link from "next/link";
 
 const PlaceCard = ({ place }) => {
+  const [photoUrl, setPhotoUrl] = useState("");
+  useEffect(() => {
+    place && getPlacePhoto();
+  }, [place]);
+
+  const getPlacePhoto = async () => {
+    const data = {
+      textQuery: place?.placeName,
+    };
+    const result = await getPlaceDetails(data).then((res) => {
+      console.log(res?.data?.places[0]?.photos[3]?.name);
+
+      const photo_url = PHOTO_REF_URL.replace(
+        "NAME",
+        res.data.places[0].photos[2].name
+      );
+      setPhotoUrl(photo_url);
+    });
+  };
   return (
     <Card className="w-[400px] h-full">
       <CardHeader>
@@ -19,7 +42,7 @@ const PlaceCard = ({ place }) => {
         <CardContent className="flex gap-5 ">
           <div>
             <img
-              src="/banner.jpg"
+              src={photoUrl}
               alt=""
               className="rounded-lg w-[300px] h-[10rem] object-cover"
             />
@@ -32,12 +55,12 @@ const PlaceCard = ({ place }) => {
               💰{place.ticketPricing}
             </CardDescription>
 
-            <Button
+            <Link
               href={`https://www.google.com/maps/search/?api=1&query=${place.placeName},${place.geoCoordinates}`}
               target="_blank"
             >
-              View on Map
-            </Button>
+              <Button>View on Map</Button>
+            </Link>
           </div>
         </CardContent>
         <CardFooter></CardFooter>

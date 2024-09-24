@@ -1,10 +1,33 @@
+import { useEffect } from "react";
+import { useState } from "react";
 import { Button } from "../../../components/ui/button";
+import { getPlaceDetails } from "../../../service/GlobalApi";
+import { PHOTO_REF_URL } from "../../../service/GlobalApi";
 
 const InfoSection = (trip) => {
+  const [photoUrl, setPhotoUrl] = useState("");
+  useEffect(() => {
+    trip.trip && getPlacePhoto();
+  }, [trip.trip]);
+
+  const getPlacePhoto = async () => {
+    const place = {
+      textQuery: trip.trip?.userSelection?.destination?.label,
+    };
+    const result = await getPlaceDetails(place).then((res) => {
+      console.log(res.data.places[0].photos[2].name);
+
+      const photo_url = PHOTO_REF_URL.replace(
+        "NAME",
+        res.data.places[0].photos[2].name
+      );
+      setPhotoUrl(photo_url);
+    });
+  };
   return (
     <div>
       <img
-        src="/banner.jpg"
+        src={photoUrl}
         alt="banner"
         className="w-full h-[340px] object-cover rounded-xl"
       />
