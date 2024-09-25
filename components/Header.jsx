@@ -8,6 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../components/ui/popover";
+import Link from "next/link";
 
 const Header = () => {
   const [user, setUser] = useState(null);
@@ -27,9 +28,11 @@ const Header = () => {
       <Image src="/logo.svg" alt="logo" width={150} height={150} />
       {user ? (
         <div className="flex">
+          <Link href="/my-trips">
           <Button variant="outline" className="rounded-full">
             My Trips
           </Button>
+          </Link>
 
           <Popover>
             <PopoverTrigger>
