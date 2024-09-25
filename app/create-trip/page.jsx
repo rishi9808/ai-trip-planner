@@ -81,29 +81,17 @@ const createTrip = () => {
       !formData?.budget ||
       !formData?.travel_with
     ) {
-      // toast({
-      //   variant: "destructive",
-      //   title: "Error",
-      //   description: "Please fill all the fields",
-      // });
+      toast.error("Please fill all the fields");
       return;
     }
 
     if (formData.days < 1) {
-      // toast({
-      //   variant: "destructive",
-      //   title: "Error",
-      //   description: "Days should be greater than 0",
-      // });
+      toast.error("Days should be greater than 0");
       return;
     }
 
     if (formData.days > 5) {
-      // toast({
-      //   variant: "destructive",
-      //   title: "Error",
-      //   description: "Days should be less than 5",
-      // });
+      toast.error("Days should be less than 5");
       return;
     }
 
@@ -122,6 +110,7 @@ const createTrip = () => {
 
     console.log(result.response.text());
     setLoading(false);
+    toast.success("Trip generated successfully");
     saveTripDetails(result.response.text());
   };
 
