@@ -10,7 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import { getPlaceDetails } from "../../../service/GlobalApi";
 import { PHOTO_REF_URL } from "../../../service/GlobalApi";
-import Link from "next/link";
+
 
 const TripCard = ({ trip }) => {
   const [photoUrl, setPhotoUrl] = useState("");
@@ -75,7 +75,7 @@ const TripCard = ({ trip }) => {
             </div>
           </CardContent>
           <CardFooter>
-            
+
           </CardFooter>
         </div>
       </Card>
