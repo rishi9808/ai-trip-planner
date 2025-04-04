@@ -83,7 +83,7 @@ const PlaceCard = ({ place }) => {
   };
 
   return (
-    <Card className="w-[400px] h-full">
+    <Card className="h-80">
       <CardHeader>
         <CardTitle>{place.placeName}</CardTitle>
         <CardDescription>{place.placeDetails}</CardDescription>

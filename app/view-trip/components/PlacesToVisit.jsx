@@ -8,20 +8,20 @@ const PlacesToVisit = ({ trip }) => {
   }, [trip]);
   return (
     <div>
-      <h2 className="font-bold text-4xl">Places to Visit 🗺️</h2>
+      <h2 className="font-bold text-4xl mb-8">Places to Visit 🗺️</h2>
 
       {trip?.tripData?.itinerary.map((day, index) => (
-        <div key={index}>
-          <h2 className="font-bold text-3xl my-10 text-center">
-            {" "}
-            {day.day} 👣{" "}
+        <div key={index} className="mb-12">
+          <h2 className="font-bold text-3xl my-8 text-center">
+            {day.day} 👣
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {day.plan.map((place, index) => (
-              <div className="my-3">
-                <h2 className="font-medium text-sm text-orange-600">
+          <div className="grid grid-cols-2 gap-4 ">
+            {day.plan.map((place, placeIndex) => (
+              <div key={placeIndex} >
+                 {/* TODO: Add time range in db */}
+                {/* <h2 className="font-medium text-sm text-orange-600 mb-2">
                   {place.time_range}
-                </h2>
+                </h2> */}
                 <PlaceCard place={place} />
               </div>
             ))}
