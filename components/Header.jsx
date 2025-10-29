@@ -88,14 +88,9 @@ const Header = () => {
 
         {user ? (
           <div className="flex items-center gap-3">
-            <Link href="/create-trip">
-              <Button
-                variant="ghost"
-                className="hidden rounded-full md:inline-flex"
-              >
-                New Itinerary
-              </Button>
-            </Link>
+            <Button asChild variant="outline" className="rounded-full px-5">
+              <Link href="/create-trip">New itinerary</Link>
+            </Button>
 
             <Popover>
               <PopoverTrigger className="flex items-center">
@@ -139,17 +134,12 @@ const Header = () => {
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <Link href="/create-trip">
-              <Button
-                variant="ghost"
-                className="hidden rounded-full md:inline-flex"
-              >
-                Sign in
-              </Button>
-            </Link>
-            <Link href="/create-trip">
-              <Button className="rounded-full shadow-lg">Get started</Button>
-            </Link>
+            <Button
+              asChild
+              className="rounded-full bg-primary px-6 text-primary-foreground shadow-lg hover:bg-primary/90"
+            >
+              <Link href="/create-trip">Get started</Link>
+            </Button>
           </div>
         )}
       </div>
