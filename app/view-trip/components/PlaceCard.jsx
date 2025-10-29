@@ -11,7 +11,6 @@ import { useEffect, useState } from "react";
 import { getPlaceDetails } from "../../../service/GlobalApi";
 import { PHOTO_REF_URL } from "../../../service/GlobalApi";
 import Link from "next/link";
-import Image from "next/image";
 
 const PlaceCard = ({ place }) => {
   const [photoUrl, setPhotoUrl] = useState("");
@@ -26,6 +25,18 @@ const PlaceCard = ({ place }) => {
     }
   }, [place]);
 
+  const testImageLoad = (url) => {
+    if (typeof window === "undefined") {
+      return Promise.reject(new Error("Window object not available"));
+    }
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.onload = () => resolve(url);
+      img.onerror = () => reject(new Error(`Failed to load: ${url}`));
+      img.src = url;
+    });
+  };
+
   const getPlacePhoto = async () => {
     try {
       const data = {
@@ -38,37 +49,30 @@ const PlaceCard = ({ place }) => {
 
       if (photos && photos.length > 0) {
         // Try multiple photos if available
-        let loaded = false;
-        for (let i = 0; i < Math.min(photos.length, 3) && !loaded; i++) {
+        const photosToTry = Math.min(photos.length, 3);
+        let loadedUrl = null;
+
+        for (let i = 0; i < photosToTry; i++) {
           try {
             const photoRef = photos[i].name;
             const photo_url = PHOTO_REF_URL.replace("NAME", photoRef);
-            console.log(`Trying photo ${i+1}/${Math.min(photos.length, 3)}: ${photo_url}`);
-            
-            // Test if the image is loadable
-            const testImg = new Image();
-            testImg.onload = () => {
-              setPhotoUrl(photo_url);
-              setIsLoading(false);
-              loaded = true;
-            };
-            testImg.onerror = () => {
-              console.warn(`Photo ${i+1} failed to load`);
-              if (i === Math.min(photos.length, 3) - 1) {
-                throw new Error("All photos failed to load");
-              }
-            };
-            testImg.src = photo_url;
-            
-            // Add a timeout to prevent hanging
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            if (loaded) break;
+            console.log(`Trying photo ${i + 1}/${photosToTry}: ${photo_url}`);
+
+            // Test if the image loads successfully
+            await testImageLoad(photo_url);
+            loadedUrl = photo_url;
+            console.log(`Successfully loaded photo ${i + 1}`);
+            break;
           } catch (photoError) {
-            console.warn(`Error with photo ${i}:`, photoError);
+            console.warn(`Photo ${i + 1} failed to load:`, photoError.message);
+            // Continue to next photo
           }
         }
-        
-        if (!loaded) {
+
+        if (loadedUrl) {
+          setPhotoUrl(loadedUrl);
+          setIsLoading(false);
+        } else {
           throw new Error("No photos could be loaded");
         }
       } else {

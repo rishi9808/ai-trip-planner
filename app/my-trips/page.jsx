@@ -14,22 +14,30 @@ const MyTrips = () => {
 
   const [photoUrl, setPhotoUrl] = useState("");
   useEffect(() => {
-    trips && getPlacePhoto();
+    if (!trips?.length) {
+      return;
+    }
+    getPlacePhoto();
   }, [trips]);
 
   const getPlacePhoto = async () => {
-    const place = {
-      textQuery: trips[0]?.userSelection?.destination?.label,
-    };
-    const result = await getPlaceDetails(place).then((res) => {
-      console.log(res.data.places[0].photos[2].name);
+    const destinationLabel = trips?.[0]?.userSelection?.destination?.label;
+    if (!destinationLabel) {
+      return;
+    }
 
-      const photo_url = PHOTO_REF_URL.replace(
-        "NAME",
-        res.data.places[0].photos[2].name
-      );
+    try {
+      const response = await getPlaceDetails({ textQuery: destinationLabel });
+      const photoName = response?.data?.places?.[0]?.photos?.[2]?.name;
+      if (!photoName) {
+        return;
+      }
+
+      const photo_url = PHOTO_REF_URL.replace("NAME", photoName);
       setPhotoUrl(photo_url);
-    });
+    } catch (error) {
+      console.error("Failed to load place photo", error);
+    }
   };
 
   useEffect(() => {
@@ -48,7 +56,10 @@ const MyTrips = () => {
       where("userEmail", "==", user.email)
     );
     const querySnapshot = await getDocs(q);
-    const tripsData = querySnapshot.docs.map((doc) => doc.data());
+    const tripsData = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
     setTrips(tripsData);
     console.log("Trips", tripsData);
   };
