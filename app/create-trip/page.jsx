@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
 import { Input } from "../../components/ui/input";
 import {
@@ -21,12 +21,19 @@ import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../../service/firebaseConfig";
-import { redirect } from "next/navigation";
 import { useRouter } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import { ArrowRight, CheckCircle, Clock, Compass, Loader2 } from "lucide-react";
 
-const createTrip = () => {
+const CreateTripPage = () => {
   const [destination, setDestination] = useState(null);
-  const [formData, setFormData] = useState([]);
+  const [formData, setFormData] = useState({});
   const [openDialog, setOpenDialog] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -61,10 +68,10 @@ const createTrip = () => {
   };
 
   const handleFormChange = (name, value) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleGenerateTrip = async () => {
@@ -109,7 +116,6 @@ const createTrip = () => {
     const result = await chatSession.sendMessage(FINAL_PROMOPT);
 
     console.log(result.response.text());
-    setLoading(false);
     toast.success("Trip generated successfully");
     saveTripDetails(result.response.text());
   };
@@ -135,130 +141,270 @@ const createTrip = () => {
     router.push(`/view-trip/${docid}`);
   };
 
+  const summaryItems = useMemo(
+    () => [
+      {
+        label: "Destination",
+        value: formData?.destination?.label || "Not selected",
+      },
+      { label: "Travelers", value: formData?.travel_with || "Not selected" },
+      { label: "Days", value: formData?.days || "—" },
+      { label: "Budget", value: formData?.budget || "Not selected" },
+    ],
+    [formData]
+  );
+
   return (
-    <div
-      className="sm:px-10 md:px-32 lg:px-56 xl:px-10
-    mt-10"
-    >
-      <h2 className="font-bold text-3xl">Tell us your travel preferences</h2>
-      <p className="text-muted-foreground my-5 text-lg">
-        Just provide some basic information about your trip and we will generate
-        a personalized itinerary for you.
-      </p>
-
-      <div className="mt-20 flex flex-col gap-10">
-        <div>
-          <h2 className="text-xl font-medium my-3">
-            What is your destination of your choice?
-          </h2>
-          <GooglePlacesAutocomplete
-            apiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}
-            selectProps={{
-              destination,
-              onChange: (destination) => {
-                setDestination(destination);
-                handleFormChange("destination", destination);
-              },
-              placeholder: "Search for a destination",
-            }}
-          />
-        </div>
-        <div>
-          <h2 className="text-xl font-medium mt-10 mb-3">
-            How many days are you planning your trip?
-          </h2>
-          <Input
-            placeholder="Enter number of days"
-            type="number"
-            onChange={(e) => handleFormChange("days", e.target.value)}
-          />
-        </div>
-      </div>
-      <div>
-        <h2 className="text-xl font-medium mt-10 mb-3">
-          What is your budget for the trip?
-        </h2>
-        <div className="grid grid-cols-3 gap-5 mt-5">
-          {SelectBudgetOptions.map((option) => (
-            <div
-              key={option.id}
-              className={`cursor-pointer border p-4 mb-5 rounded-lg hover:shadow-lg shadow-sm
-                ${
-                  formData.budget === option.title
-                    ? "border-primary"
-                    : "border-gray-300"
-                }`}
-              onClick={() => handleFormChange("budget", option.title)}
-            >
-              <h2 className="">{option.icon}</h2>
-              <h2 className=" font-bold text-lg">{option.title}</h2>
-              <h2 className=" font-normal text-base text-muted-foreground">
-                {option.desc}
-              </h2>
+    <section className="relative min-h-screen bg-muted/40 py-14 sm:py-20">
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-5 rounded-3xl border border-border/70 bg-background/95 px-10 py-8 text-center shadow-2xl">
+            <Loader2 className="size-10 animate-spin text-primary" />
+            <div className="space-y-2">
+              <p className="text-lg font-semibold text-foreground">
+                Curating a plan just for you
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Gathering hidden gems, balancing your pace, and tailoring
+                recommendations.
+              </p>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
+      )}
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.08),_transparent_55%)]" />
 
-      <div>
-        <h2 className="text-xl font-medium mt-10 mb-3">
-          Who do you plan to travel with?
-        </h2>
-        <div className="grid grid-cols-3 gap-5 mt-5">
-          {SelectTravelesList.map((option) => (
-            <div
-              key={option.id}
-              className={`cursor-pointer border p-4 mb-5 rounded-lg hover:shadow-lg shadow-sm
-                ${
-                  formData.travel_with === option.title
-                    ? "border-primary"
-                    : "border-gray-300"
-                }`}
-              onClick={() => handleFormChange("travel_with", option.title)}
-            >
-              <h2 className="">{option.icon}</h2>
-              <h2 className=" font-bold text-lg">{option.title}</h2>
-              <h2 className=" font-normal text-base text-muted-foreground">
-                {option.desc}
-              </h2>
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 sm:px-6 md:flex-row md:gap-12 lg:px-8">
+        <div className="md:w-2/5">
+          <div className="sticky top-28 space-y-6 md:space-y-8">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
+                <Compass className="size-3.5" />
+                Plan in minutes
+              </span>
+              <h1 className="mt-4 text-balance text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+                Tell us the essentials and we will craft your dream escape
+              </h1>
+              <p className="mt-4 text-muted-foreground">
+                Personalize every detail—from budget and travel companions to
+                the pace you prefer. Our AI refines the plan instantly so you
+                can focus on the fun parts.
+              </p>
             </div>
-          ))}
-        </div>
-      </div>
 
-      <div className="flex justify-center items-center ">
-        {loading ? (
-          <Button className="w-full mt-5" disabled>
-            Loading...
-          </Button>
-        ) : (
-          <Button className="w-full mt-5" onClick={handleGenerateTrip}>
-            Generate Trip
-          </Button>
-        )}
+            <Card className="border border-border/60 bg-background/70 shadow-lg backdrop-blur">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-semibold">
+                  Trip Summary
+                </CardTitle>
+                <CardDescription>
+                  Keep track of your selections as you go. You can tweak
+                  anything before generating your itinerary.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {summaryItems.map((item) => (
+                  <div
+                    key={item.label}
+                    className="flex items-start justify-between gap-4 text-sm"
+                  >
+                    <span className="text-muted-foreground">{item.label}</span>
+                    <span className="max-w-[60%] text-right font-medium text-foreground">
+                      {item.value}
+                    </span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <div className="hidden flex-col gap-3 rounded-2xl border border-primary/30 bg-primary/10 px-6 py-5 text-sm text-primary shadow-sm md:flex">
+              <div className="flex items-center gap-2 font-medium">
+                <CheckCircle className="size-4" />
+                What you get
+              </div>
+              <p className="text-primary/80">
+                A curated day-by-day itinerary, hotel picks, must-see spots, and
+                smart suggestions tailored to how you love to travel.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="md:w-3/5">
+          <Card className="border-0 bg-background/90 shadow-xl ring-1 ring-border/50 backdrop-blur">
+            <CardHeader className="pb-0">
+              <CardTitle className="text-2xl font-semibold">
+                Your travel canvas
+              </CardTitle>
+              <CardDescription>
+                Start with the basics. We will transform them into a polished
+                itinerary you can share or edit anytime.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8 pt-8">
+              <div className="space-y-3">
+                <h2 className="text-lg font-medium text-foreground">
+                  Where are you heading?
+                </h2>
+                <div className="rounded-lg border border-border/70 bg-background p-2 shadow-sm">
+                  <GooglePlacesAutocomplete
+                    apiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}
+                    selectProps={{
+                      destination,
+                      onChange: (value) => {
+                        setDestination(value);
+                        handleFormChange("destination", value);
+                      },
+                      placeholder: "Search global destinations...",
+                      styles: {
+                        control: (provided) => ({
+                          ...provided,
+                          backgroundColor: "transparent",
+                          border: "none",
+                          boxShadow: "none",
+                        }),
+                        input: (provided) => ({
+                          ...provided,
+                          color: "hsl(var(--foreground))",
+                        }),
+                        singleValue: (provided) => ({
+                          ...provided,
+                          color: "hsl(var(--foreground))",
+                        }),
+                        menu: (provided) => ({
+                          ...provided,
+                          zIndex: 10,
+                        }),
+                      },
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="text-lg font-medium text-foreground">
+                  Trip duration
+                </h2>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Input
+                    placeholder="Number of days"
+                    type="number"
+                    min={1}
+                    max={5}
+                    className="h-11"
+                    onChange={(e) => handleFormChange("days", e.target.value)}
+                  />
+                  <div className="flex items-center gap-3 rounded-lg border border-dashed border-border/70 bg-muted/40 p-3 text-sm text-muted-foreground">
+                    <Clock className="size-4" />
+                    Trips up to five days get the most detailed itineraries.
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="text-lg font-medium text-foreground">
+                  Budget comfort
+                </h2>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {SelectBudgetOptions.map((option) => {
+                    const isActive = formData.budget === option.title;
+                    return (
+                      <button
+                        type="button"
+                        key={option.id}
+                        onClick={() => handleFormChange("budget", option.title)}
+                        className={`group flex h-full flex-col gap-2 rounded-xl border p-4 text-left transition-all ${
+                          isActive
+                            ? "border-primary bg-primary/10 shadow-lg"
+                            : "border-border/60 bg-background/80 hover:border-primary/60 hover:bg-primary/5"
+                        }`}
+                      >
+                        <span className="text-2xl">{option.icon}</span>
+                        <span className="text-base font-semibold text-foreground">
+                          {option.title}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {option.desc}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="text-lg font-medium text-foreground">
+                  Who is coming along?
+                </h2>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {SelectTravelesList.map((option) => {
+                    const isActive = formData.travel_with === option.title;
+                    return (
+                      <button
+                        type="button"
+                        key={option.id}
+                        onClick={() =>
+                          handleFormChange("travel_with", option.title)
+                        }
+                        className={`group flex h-full flex-col gap-2 rounded-xl border p-4 text-left transition-all ${
+                          isActive
+                            ? "border-primary bg-primary/10 shadow-lg"
+                            : "border-border/60 bg-background/80 hover:border-primary/60 hover:bg-primary/5"
+                        }`}
+                      >
+                        <span className="text-2xl">{option.icon}</span>
+                        <span className="text-base font-semibold text-foreground">
+                          {option.title}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {option.desc}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Button
+                  className="w-full sm:w-auto"
+                  size="lg"
+                  disabled={loading}
+                  onClick={handleGenerateTrip}
+                >
+                  {loading ? "Generating..." : "Generate itinerary"}
+                  {!loading && <ArrowRight className="ml-2 size-4" />}
+                </Button>
+                <p className="text-sm text-muted-foreground">
+                  You can refine or regenerate as many times as you want.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <Dialog open={openDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogDescription>
-              <img src="/logo.svg" />
-              <h2 className="font-bold text-lg mt-7 text-black">
+              <img src="/logo.png" alt="AI Trip Planner" className="h-10" />
+              <h2 className="mt-6 text-lg font-semibold text-foreground">
                 Sign in with Google
               </h2>
-              <p className=" text-muted-foreground">
-                Sign in to the App with Google Authentication securely to
-                continue.
+              <p className="mt-1 text-sm text-muted-foreground">
+                Save itineraries, sync across devices, and revisit your favorite
+                trips anytime.
               </p>
-              <Button className="w-full mt-5" onClick={login}>
-                Sign In with Google
+              <Button className="mt-5 w-full" onClick={login}>
+                Continue with Google
               </Button>
             </DialogDescription>
           </DialogHeader>
         </DialogContent>
       </Dialog>
-    </div>
+    </section>
   );
 };
 
-export default createTrip;
+export default CreateTripPage;

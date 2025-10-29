@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
 import { Button } from "../../../components/ui/button";
 import {
   Card,
@@ -7,135 +10,121 @@ import {
   CardHeader,
   CardTitle,
 } from "../../../components/ui/card";
-import { useEffect, useState } from "react";
 import { getPlaceDetails } from "../../../service/GlobalApi";
 import { PHOTO_REF_URL } from "../../../service/GlobalApi";
-import Link from "next/link";
+import { Clock, MapPin, Ticket } from "lucide-react";
 
 const PlaceCard = ({ place }) => {
-  const [photoUrl, setPhotoUrl] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("/placeholder-image.jpg");
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
-    if (place) {
-      setIsLoading(true);
-      setLoadError(false);
-      getPlacePhoto();
-    }
-  }, [place]);
-
-  const testImageLoad = (url) => {
-    if (typeof window === "undefined") {
-      return Promise.reject(new Error("Window object not available"));
-    }
-    return new Promise((resolve, reject) => {
-      const img = new window.Image();
-      img.onload = () => resolve(url);
-      img.onerror = () => reject(new Error(`Failed to load: ${url}`));
-      img.src = url;
-    });
-  };
-
-  const getPlacePhoto = async () => {
-    try {
-      const data = {
-        textQuery: place?.placeName,
-      };
-      const result = await getPlaceDetails(data);
-
-      const photos = result?.data?.places[0]?.photos;
-      console.log("Photos from API:", photos);
-
-      if (photos && photos.length > 0) {
-        // Try multiple photos if available
-        const photosToTry = Math.min(photos.length, 3);
-        let loadedUrl = null;
-
-        for (let i = 0; i < photosToTry; i++) {
-          try {
-            const photoRef = photos[i].name;
-            const photo_url = PHOTO_REF_URL.replace("NAME", photoRef);
-            console.log(`Trying photo ${i + 1}/${photosToTry}: ${photo_url}`);
-
-            // Test if the image loads successfully
-            await testImageLoad(photo_url);
-            loadedUrl = photo_url;
-            console.log(`Successfully loaded photo ${i + 1}`);
-            break;
-          } catch (photoError) {
-            console.warn(`Photo ${i + 1} failed to load:`, photoError.message);
-            // Continue to next photo
-          }
-        }
-
-        if (loadedUrl) {
-          setPhotoUrl(loadedUrl);
-          setIsLoading(false);
-        } else {
-          throw new Error("No photos could be loaded");
-        }
-      } else {
-        throw new Error("No photos available for this place");
+    let isMounted = true;
+    const loadPhoto = async () => {
+      if (!place?.placeName) {
+        setIsLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error("Error fetching place photos:", error);
-      setPhotoUrl("/placeholder-image.jpg");
-      setLoadError(true);
-      setIsLoading(false);
-    }
-  };
+      try {
+        const result = await getPlaceDetails({ textQuery: place.placeName });
+        const photos = result?.data?.places?.[0]?.photos || [];
+        for (let i = 0; i < Math.min(photos.length, 3); i++) {
+          const ref = photos[i]?.name;
+          if (!ref) continue;
+          const candidate = PHOTO_REF_URL.replace("NAME", ref);
+          if (!isMounted) return;
+          setPhotoUrl(candidate);
+          setLoadError(false);
+          break;
+        }
+      } catch (error) {
+        console.warn("Place photo fallback", error);
+        if (isMounted) {
+          setPhotoUrl("/placeholder-image.jpg");
+          setLoadError(true);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadPhoto();
+    return () => {
+      isMounted = false;
+    };
+  }, [place?.placeName]);
 
   return (
-    <Card className="h-80">
-      <CardHeader>
-        <CardTitle>{place.placeName}</CardTitle>
-        <CardDescription>{place.placeDetails}</CardDescription>
-      </CardHeader>
-      <div className="flex-col">
-        <CardContent className="flex gap-5 ">
+    <Card className="flex h-full flex-col overflow-hidden border border-border/70 bg-background/80 shadow-lg backdrop-blur">
+      <CardHeader className="space-y-2">
+        <div className="flex items-start justify-between gap-3">
           <div>
-            {isLoading ? (
-              <div className="rounded-lg w-[300px] h-[10rem] bg-gray-200 flex items-center justify-center">
-                Loading image...
-              </div>
-            ) : (
-              <img
-                src={photoUrl}
-                alt={`Image of ${place.placeName}`}
-                className="rounded-lg w-[300px] h-[10rem] object-cover"
-                onError={(e) => {
-                  console.error("Image failed to load:", e);
-                  e.target.src = "/placeholder-image.jpg";
-                  e.target.onerror = null;
-                  setLoadError(true);
-                }}
-              />
-            )}
-            {loadError && (
-              <div className="text-xs text-red-400 mt-1 text-center">
-                Could not load image for this place
-              </div>
-            )}
+            <CardTitle className="text-xl text-foreground">
+              {place?.placeName || "Experience"}
+            </CardTitle>
+            <CardDescription>{place?.placeDetails}</CardDescription>
           </div>
-          <div className="flex flex-col justify-center">
-            <CardDescription className="my-2">
-              🚘 {place.timeToTravel}
-            </CardDescription>
-            <CardDescription className="mb-2 text-sm">
-              💰{place.ticketPricing}
-            </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-1 flex-col gap-5">
+        <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-muted/20">
+          {isLoading ? (
+            <div className="flex h-44 items-center justify-center bg-muted">
+              <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                Loading…
+              </span>
+            </div>
+          ) : (
+            <img
+              src={photoUrl}
+              alt={`Preview of ${place?.placeName || "location"}`}
+              className="h-44 w-full object-cover"
+              onError={(event) => {
+                event.currentTarget.src = "/placeholder-image.jpg";
+                event.currentTarget.onerror = null;
+                setLoadError(true);
+              }}
+              loading="lazy"
+            />
+          )}
+        </div>
+        {loadError && (
+          <p className="text-xs text-red-500">
+            Image preview unavailable. Tap map to explore more visuals.
+          </p>
+        )}
 
-            <Link
-              href={`https://www.google.com/maps/search/?api=1&query=${place.placeName},${place.geoCoordinates}`}
-              target="_blank"
-            >
-              <Button>View on Map</Button>
-            </Link>
-          </div>
-        </CardContent>
-        <CardFooter></CardFooter>
-      </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {place?.timeToTravel && (
+            <span className="inline-flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm font-medium text-muted-foreground">
+              <Clock className="size-4 text-primary" />
+              {place.timeToTravel}
+            </span>
+          )}
+          {place?.ticketPricing && (
+            <span className="inline-flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm font-medium text-muted-foreground">
+              <Ticket className="size-4 text-primary" />
+              {place.ticketPricing}
+            </span>
+          )}
+        </div>
+
+        <Button asChild variant="outline" className="w-full">
+          <Link
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+              `${place?.placeName || ""}, ${place?.geoCoordinates || ""}`
+            )}`}
+            target="_blank"
+          >
+            <MapPin className="mr-2 size-4" />
+            View on Maps
+          </Link>
+        </Button>
+      </CardContent>
+      <CardFooter className="hidden" />
     </Card>
   );
 };

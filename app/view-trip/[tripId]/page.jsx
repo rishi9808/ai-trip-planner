@@ -26,19 +26,14 @@ const ViewTrip = ({ params: { tripId } }) => {
     }
   };
   return (
-    <div className="p-10 md:px-20 lg:px-44 xl:px-56">
-      {/* Info section */}
-      <InfoSection trip={tripData} />
-
-      {/* Hotels */}
-      <Hotels trip={tripData} />
-
-      {/* Daily plan */}
-      <PlacesToVisit trip={tripData} />
-
-      {/* Footer */}
+    <main className="min-h-screen bg-muted/20 pb-16">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-4 pt-10 sm:px-6 md:px-10 lg:px-12">
+        <InfoSection trip={tripData} />
+        <Hotels trip={tripData} />
+        <PlacesToVisit trip={tripData} />
+      </div>
       <Footer />
-    </div>
+    </main>
   );
 };
 

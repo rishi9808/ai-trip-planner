@@ -3,43 +3,22 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../../service/firebaseConfig";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getPlaceDetails } from "../../service/GlobalApi";
-import { PHOTO_REF_URL } from "../../service/GlobalApi";
 import TripCard from "../view-trip/components/TripCard";
+import { Button } from "../../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import { Plane, Sparkles } from "lucide-react";
 
 const MyTrips = () => {
   const router = useRouter();
   const [trips, setTrips] = useState([]);
   const [user, setUser] = useState(null);
-
-  const [photoUrl, setPhotoUrl] = useState("");
-  useEffect(() => {
-    if (!trips?.length) {
-      return;
-    }
-    getPlacePhoto();
-  }, [trips]);
-
-  const getPlacePhoto = async () => {
-    const destinationLabel = trips?.[0]?.userSelection?.destination?.label;
-    if (!destinationLabel) {
-      return;
-    }
-
-    try {
-      const response = await getPlaceDetails({ textQuery: destinationLabel });
-      const photoName = response?.data?.places?.[0]?.photos?.[2]?.name;
-      if (!photoName) {
-        return;
-      }
-
-      const photo_url = PHOTO_REF_URL.replace("NAME", photoName);
-      setPhotoUrl(photo_url);
-    } catch (error) {
-      console.error("Failed to load place photo", error);
-    }
-  };
-
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (!storedUser) {
@@ -51,6 +30,7 @@ const MyTrips = () => {
   }, [router]);
 
   const getTripDetails = async (user) => {
+    setLoading(true);
     const q = query(
       collection(db, "AITrips"),
       where("userEmail", "==", user.email)
@@ -62,23 +42,84 @@ const MyTrips = () => {
     }));
     setTrips(tripsData);
     console.log("Trips", tripsData);
+    setLoading(false);
   };
 
   return (
-    <div className="p-7 ">
-      <h1 className="text-3xl font-bold my-10">My Trips</h1>
-      <ul className="grid grid-cols-3 gap-5 ">
-        {trips.map((trip, index) => (
-          <TripCard key={index} trip={trip} />
-        ))}
-      </ul>
-    </div>
+    <section className="min-h-screen bg-muted/30 py-14">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-5 sm:px-8">
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary">
+              <Plane className="size-4" />
+              Your adventures
+            </span>
+            <h1 className="mt-4 text-balance text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+              Trips you have crafted with AI
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
+              Revisit plans, fine-tune itineraries, or share them with friends.
+              New ideas are only a few clicks away.
+            </p>
+          </div>
+          <Button
+            className="w-full sm:w-auto"
+            onClick={() => router.push("/create-trip")}
+          >
+            Plan a new trip
+          </Button>
+        </header>
+
+        {loading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <Card
+                key={`skeleton-${index}`}
+                className="h-full animate-pulse border border-border/50 bg-background/80"
+              >
+                <div className="h-40 w-full rounded-t-xl bg-muted" />
+                <CardContent className="space-y-4 pt-6">
+                  <div className="h-4 w-2/3 rounded bg-muted" />
+                  <div className="h-3 w-full rounded bg-muted" />
+                  <div className="h-10 w-full rounded bg-muted" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : trips.length ? (
+          <ul className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {trips.map((trip) => (
+              <TripCard key={trip.id} trip={trip} />
+            ))}
+          </ul>
+        ) : (
+          <Card className="border border-dashed border-primary/40 bg-background/70 py-12 text-center shadow-none">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl">
+                <Sparkles className="size-5 text-primary" />
+                No trips yet
+              </CardTitle>
+              <CardDescription className="max-w-md mx-auto text-base">
+                When you plan with AI Trip Planner, your itineraries will live
+                here for quick edits and sharing.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => router.push("/create-trip")}>
+                Create your first trip
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </section>
   );
 };
 
 export default MyTrips;
 
-{/* 
+{
+  /* 
 //     <li key={index}>
       //       <div className="border">
       //           <img src={photoUrl} alt="trip" />
@@ -91,4 +132,5 @@ export default MyTrips;
       //       </div>
       //     </li>
       //   ))}
-      // </ul> */}
+      // </ul> */
+}
